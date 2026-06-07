@@ -2,21 +2,21 @@ import { useState, useCallback } from 'react';
 import Generator from './components/Generator';
 import SavedPosts from './components/SavedPosts';
 import Calendar from './components/Calendar';
-import { getApiKey, saveApiKey, getPosts } from './store';
+import Settings from './components/Settings';
+import { getApiKey, saveApiKey, getElApiKey, getPosts } from './store';
 import type { SavedPost } from './types';
 
-type Tab = 'generate' | 'saved' | 'calendar';
+type Tab = 'generate' | 'saved' | 'calendar' | 'settings';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('generate');
   const [apiKey, setApiKey] = useState(getApiKey);
+  const [elApiKey, setElApiKey] = useState(getElApiKey);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiSetup, setShowApiSetup] = useState(!getApiKey());
   const [posts, setPosts] = useState<SavedPost[]>(getPosts);
 
-  const refreshPosts = useCallback(() => {
-    setPosts(getPosts());
-  }, []);
+  const refreshPosts = useCallback(() => setPosts(getPosts()), []);
 
   function handleSaveApiKey() {
     const key = apiKeyInput.trim();
@@ -45,7 +45,7 @@ export default function App() {
       }}>
         <div style={{
           width: '100%',
-          maxWidth: 420,
+          maxWidth: 440,
           padding: 36,
           borderRadius: 16,
           border: '1px solid #252535',
@@ -63,7 +63,7 @@ export default function App() {
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: '#9090b0', textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#9090b0', textTransform: 'uppercase' as const, letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
               Anthropic API Key
             </label>
             <input
@@ -111,82 +111,92 @@ export default function App() {
     );
   }
 
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'generate', label: '✨ Generieren' },
+    { id: 'saved', label: `📂 Gespeichert${savedCount > 0 ? ` (${savedCount})` : ''}` },
+    { id: 'calendar', label: `📅 Kalender${scheduledCount > 0 ? ` (${scheduledCount})` : ''}` },
+    { id: 'settings', label: `⚙️ Einstellungen${!elApiKey ? ' ●' : ''}` },
+  ];
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#08080e' }}>
       {/* Header */}
       <header style={{
         padding: '0 24px',
         borderBottom: '1px solid #16161f',
-        background: 'rgba(8,8,14,0.9)',
+        background: 'rgba(8,8,14,0.92)',
         backdropFilter: 'blur(12px)',
         position: 'sticky',
         top: 0,
         zIndex: 10,
         display: 'flex',
         alignItems: 'center',
-        gap: 16,
+        gap: 4,
         height: 60,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 16, flexShrink: 0 }}>
           <span style={{ fontSize: 20 }}>⚡</span>
           <span style={{ fontSize: 15, fontWeight: 800, color: '#e8e8f0' }}>AI Content</span>
         </div>
 
-        {/* Tabs */}
-        <nav style={{ display: 'flex', gap: 2, flex: 1 }}>
-          {([
-            { id: 'generate', label: '✨ Generieren' },
-            { id: 'saved', label: `📂 Gespeichert${savedCount > 0 ? ` (${savedCount})` : ''}` },
-            { id: 'calendar', label: `📅 Kalender${scheduledCount > 0 ? ` (${scheduledCount})` : ''}` },
-          ] as const).map(t => (
+        <nav style={{ display: 'flex', gap: 2, flex: 1, flexWrap: 'wrap' }}>
+          {TABS.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               style={{
-                padding: '6px 14px',
+                padding: '6px 12px',
                 borderRadius: 8,
                 border: 'none',
                 background: tab === t.id ? 'rgba(124,58,237,0.15)' : 'transparent',
-                color: tab === t.id ? '#a855f7' : '#5a5a7a',
+                color: tab === t.id ? '#a855f7' : t.id === 'settings' && !elApiKey ? '#f59e0b' : '#5a5a7a',
                 fontSize: 13,
                 fontWeight: tab === t.id ? 600 : 400,
                 cursor: 'pointer',
                 transition: 'all 0.15s',
+                whiteSpace: 'nowrap',
               }}
             >
               {t.label}
             </button>
           ))}
         </nav>
+      </header>
 
-        {/* API key button */}
-        <button
-          onClick={() => setShowApiSetup(true)}
-          title="API Key ändern"
+      {/* ElevenLabs hint banner */}
+      {!elApiKey && tab !== 'settings' && (
+        <div
+          onClick={() => setTab('settings')}
           style={{
-            padding: '5px 10px',
-            borderRadius: 6,
-            border: '1px solid #252535',
-            background: 'transparent',
-            color: '#3a3a55',
-            fontSize: 11,
+            background: 'rgba(245,158,11,0.08)',
+            borderBottom: '1px solid rgba(245,158,11,0.2)',
+            padding: '8px 24px',
+            fontSize: 12,
+            color: '#f59e0b',
             cursor: 'pointer',
+            textAlign: 'center',
           }}
         >
-          🔑 API Key
-        </button>
-      </header>
+          🎙️ ElevenLabs API Key fehlt – klick hier um Text-to-Speech freizuschalten →
+        </div>
+      )}
 
       {/* Main */}
       <main style={{ flex: 1, padding: '24px', maxWidth: 1100, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
         {tab === 'generate' && (
-          <Generator apiKey={apiKey} onPostSaved={refreshPosts} />
+          <Generator apiKey={apiKey} elApiKey={elApiKey} onPostSaved={refreshPosts} />
         )}
         {tab === 'saved' && (
           <SavedPosts posts={posts} onChange={refreshPosts} />
         )}
         {tab === 'calendar' && (
           <Calendar posts={posts} onChange={refreshPosts} />
+        )}
+        {tab === 'settings' && (
+          <Settings
+            onElApiKeyChange={setElApiKey}
+            onAnthropicKeyChange={setApiKey}
+          />
         )}
       </main>
     </div>

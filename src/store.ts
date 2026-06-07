@@ -1,7 +1,9 @@
-import type { SavedPost } from './types';
+import type { ELVoice, SavedPost } from './types';
 
 const POSTS_KEY = 'sm_saved_posts';
 const APIKEY_KEY = 'sm_api_key';
+const EL_APIKEY_KEY = 'sm_el_api_key';
+const CLONED_VOICES_KEY = 'sm_cloned_voices';
 
 export function getApiKey(): string {
   return localStorage.getItem(APIKEY_KEY) ?? '';
@@ -41,4 +43,31 @@ export function deletePost(id: string): void {
 
 export function createId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+export function getElApiKey(): string {
+  return localStorage.getItem(EL_APIKEY_KEY) ?? '';
+}
+
+export function saveElApiKey(key: string): void {
+  localStorage.setItem(EL_APIKEY_KEY, key);
+}
+
+export function getClonedVoices(): ELVoice[] {
+  try {
+    return JSON.parse(localStorage.getItem(CLONED_VOICES_KEY) ?? '[]') as ELVoice[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveClonedVoice(voice: ELVoice): void {
+  const voices = getClonedVoices();
+  voices.unshift({ ...voice, isCloned: true });
+  localStorage.setItem(CLONED_VOICES_KEY, JSON.stringify(voices));
+}
+
+export function deleteClonedVoice(voiceId: string): void {
+  const voices = getClonedVoices().filter(v => v.voice_id !== voiceId);
+  localStorage.setItem(CLONED_VOICES_KEY, JSON.stringify(voices));
 }

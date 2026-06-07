@@ -3,9 +3,11 @@ import type { Channel, GenerateInput, GeneratedPost, Niche, Tone } from '../type
 import { generateContent } from '../api';
 import { createId, savePost } from '../store';
 import type { SavedPost } from '../types';
+import VoicePlayer from './VoicePlayer';
 
 interface Props {
   apiKey: string;
+  elApiKey: string;
   onPostSaved: () => void;
 }
 
@@ -30,7 +32,7 @@ const NICHES: { id: Niche; label: string; emoji: string; examples: string[] }[] 
 
 const AUDIENCE_PRESETS = ['18–25 Jährige', 'Fußballfans', 'Fitness Anfänger', 'Unternehmer', 'Studenten', 'Eltern'];
 
-export default function Generator({ apiKey, onPostSaved }: Props) {
+export default function Generator({ apiKey, elApiKey, onPostSaved }: Props) {
   const [topic, setTopic] = useState('');
   const [channel, setChannel] = useState<Channel>('tiktok');
   const [tone, setTone] = useState<Tone>('casual');
@@ -364,6 +366,11 @@ export default function Generator({ apiKey, onPostSaved }: Props) {
                 </div>
               )}
             </div>
+
+            <VoicePlayer
+              text={[result.hook, result.main, result.cta].join('\n\n')}
+              elApiKey={elApiKey}
+            />
           </div>
         )}
 

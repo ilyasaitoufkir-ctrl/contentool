@@ -26,3 +26,10 @@ export interface SavedPost {
   input: GenerateInput;
   content: GeneratedPost;
 }
+
+export interface ELVoice {
+  voice_id: string;
+  name: string;
+  category: string;
+  isCloned?: boolean;
+}
