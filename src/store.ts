@@ -6,7 +6,7 @@ const EL_APIKEY_KEY = 'sm_el_api_key';
 const CLONED_VOICES_KEY = 'sm_cloned_voices';
 
 export function getApiKey(): string {
-  return localStorage.getItem(APIKEY_KEY) ?? '';
+  return localStorage.getItem(APIKEY_KEY) || import.meta.env.VITE_ANTHROPIC_KEY || '';
 }
 
 export function saveApiKey(key: string): void {
@@ -46,7 +46,7 @@ export function createId(): string {
 }
 
 export function getElApiKey(): string {
-  return localStorage.getItem(EL_APIKEY_KEY) ?? '';
+  return localStorage.getItem(EL_APIKEY_KEY) || import.meta.env.VITE_EL_KEY || '';
 }
 
 export function saveElApiKey(key: string): void {

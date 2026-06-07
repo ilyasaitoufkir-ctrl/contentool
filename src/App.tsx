@@ -13,7 +13,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState(getApiKey);
   const [elApiKey, setElApiKey] = useState(getElApiKey);
   const [apiKeyInput, setApiKeyInput] = useState('');
-  const [showApiSetup, setShowApiSetup] = useState(!getApiKey());
+  const [showApiSetup, setShowApiSetup] = useState(() => !getApiKey());
   const [posts, setPosts] = useState<SavedPost[]>(getPosts);
 
   const refreshPosts = useCallback(() => setPosts(getPosts()), []);
