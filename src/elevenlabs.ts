@@ -12,7 +12,7 @@ export const DEFAULT_VOICES: ELVoice[] = [
 
 export async function fetchVoices(apiKey: string): Promise<ELVoice[]> {
   const res = await fetch(`${BASE}/voices`, {
-    headers: { 'xi-api-key': apiKey },
+    headers: { 'xi-api-key': apiKey.trim() },
   });
   if (!res.ok) throw new Error(`ElevenLabs Fehler ${res.status}`);
   const data = await res.json() as { voices: ELVoice[] };
@@ -27,7 +27,7 @@ export async function textToSpeech(
   const res = await fetch(`${BASE}/text-to-speech/${voiceId}`, {
     method: 'POST',
     headers: {
-      'xi-api-key': apiKey,
+      'xi-api-key': apiKey.trim(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -37,8 +37,10 @@ export async function textToSpeech(
     }),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { detail?: { message?: string } };
-    throw new Error(err.detail?.message ?? `ElevenLabs Fehler ${res.status}`);
+    const err = await res.json().catch(() => ({})) as { detail?: string | { message?: string } };
+    const detail = err.detail;
+    const msg = typeof detail === 'string' ? detail : detail?.message ?? `ElevenLabs Fehler ${res.status}`;
+    throw new Error(msg);
   }
   const blob = await res.blob();
   return URL.createObjectURL(blob);
@@ -56,14 +58,26 @@ export async function cloneVoice(
 
   const res = await fetch(`${BASE}/voices/add`, {
     method: 'POST',
-    headers: { 'xi-api-key': apiKey },
+    // NO Content-Type header – browser sets it automatically with correct boundary
+    headers: { 'xi-api-key': apiKey.trim() },
     body: formData,
   });
+
+  const data = await res.json().catch(() => ({})) as {
+    voice_id?: string;
+    detail?: string | { message?: string; status?: string };
+  };
+  console.log('ElevenLabs cloneVoice response:', res.status, data);
+
   if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { detail?: { message?: string } };
-    throw new Error(err.detail?.message ?? `Klon fehlgeschlagen: ${res.status}`);
+    const detail = data.detail;
+    const msg = typeof detail === 'string'
+      ? detail
+      : detail?.message ?? detail?.status ?? `Klon fehlgeschlagen (${res.status})`;
+    throw new Error(msg);
   }
-  const data = await res.json() as { voice_id: string };
+
+  if (!data.voice_id) throw new Error('Keine Voice ID in der Antwort');
   return { voice_id: data.voice_id, name };
 }
 
