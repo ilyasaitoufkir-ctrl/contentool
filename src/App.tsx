@@ -3,15 +3,23 @@ import Generator from './components/Generator';
 import SavedPosts from './components/SavedPosts';
 import Calendar from './components/Calendar';
 import Settings from './components/Settings';
-import { getApiKey, saveApiKey, getElApiKey, getPosts } from './store';
+import { getApiKey, saveApiKey, getElApiKey, saveElApiKey, getPosts } from './store';
 import type { SavedPost } from './types';
 
 type Tab = 'generate' | 'saved' | 'calendar' | 'settings';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('generate');
-  const [apiKey, setApiKey] = useState(getApiKey);
-  const [elApiKey, setElApiKey] = useState(getElApiKey);
+  const [apiKey, setApiKey] = useState(() => {
+    const key = getApiKey();
+    if (key) saveApiKey(key);
+    return key;
+  });
+  const [elApiKey, setElApiKey] = useState(() => {
+    const key = getElApiKey();
+    if (key) saveElApiKey(key);
+    return key;
+  });
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiSetup, setShowApiSetup] = useState(() => !getApiKey());
   const [posts, setPosts] = useState<SavedPost[]>(getPosts);
